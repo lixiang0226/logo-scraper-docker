@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.git/
+.gitignore
+Dockerfile
+.dockerignore
+*.zip
+scraping_results.csv 
+# Add your local static folder if you don't want its current contents in the image
+# static/ 
+# (but if your app creates it, it will be created inside the container)

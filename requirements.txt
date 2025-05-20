@@ -1,0 +1,9 @@
+Flask
+Flask-CORS
+selenium
+beautifulsoup4
+Pillow
+requests
+cairosvg
+lxml
+gunicorn
