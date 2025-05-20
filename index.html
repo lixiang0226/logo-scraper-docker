@@ -262,12 +262,12 @@ https://anotherexample.org" required></textarea>
 
     // --- Scraper Elements ---
     const scraperForm = document.getElementById('scraperForm');
-    const urlsInputEl = document.getElementById('urlsInput'); // New textarea
+    const urlsInputEl = document.getElementById('urlsInput');
     const scrapeMessageEl = document.getElementById('scrapeMessage');
-    const scrapedLogosGridEl = document.getElementById('scrapedLogosGrid'); // New grid container
+    const scrapedLogosGridEl = document.getElementById('scrapedLogosGrid');
     const scrapeBtn = document.getElementById('scrapeBtn');
 
-    // --- Reformat Tool Elements (remain mostly the same) ---
+    // --- Reformat Tool Elements ---
     const reformatDropArea = document.getElementById('reformatDropArea');
     const reformatFileInput = document.getElementById('reformatFileInput');
     const reformatPreviewImageEl = document.getElementById('reformatPreviewImage');
@@ -277,8 +277,8 @@ https://anotherexample.org" required></textarea>
     const processReformatBtn = document.getElementById('processReformatBtn');
     let fileToReformat = null;
 
-    // In index.html <script>
-        function addLogoToGrid(originalUrl, data, errorOccurred = false, customErrorMessage = "Failed to process logo.") {
+    // --- Helper: Create and add a single logo item to the grid ---
+    function addLogoToGrid(originalUrl, data, errorOccurred = false, customErrorMessage = "Failed to process logo.") {
         const logoItem = document.createElement('div');
         logoItem.className = 'logo-item';
 
@@ -287,35 +287,24 @@ https://anotherexample.org" required></textarea>
         const shortUrl = originalUrl.length > 40 ? originalUrl.substring(0, 37) + '...' : originalUrl;
         sourceUrlEl.textContent = `Source: ${shortUrl}`;
         if (originalUrl.length > 40) {
-            sourceUrlEl.title = originalUrl; // Show full URL on hover
+            sourceUrlEl.title = originalUrl;
         }
 
         if (errorOccurred || !data || !data.logo_url || !data.filename) {
-            // ---- ERROR HANDLING BLOCK ----
             const errorDisplay = document.createElement('div');
-            errorDisplay.className = 'logo-image placeholder'; // Use placeholder for consistent sizing
-            
+            errorDisplay.className = 'logo-image placeholder';
             const errorMsgSpan = document.createElement('span');
-            // Use the specific error message from backend if available, otherwise the custom one
             let displayError = customErrorMessage;
-            if (data && data.error) { // If backend sent a specific error in the 'error' field
-                displayError = data.error;
-            } else if (data && data.message && (errorOccurred || !data.logo_url)) { // Or if it's a message about failure
-                displayError = data.message;
-            }
-            
-            // The message you requested:
+            if (data && data.error) { displayError = data.error; }
+            else if (data && data.message && (errorOccurred || !data.logo_url)) { displayError = data.message; }
             errorMsgSpan.innerHTML = `❌ Error: ${displayError}.<br>Please try using the Reformat Tool.`;
             errorMsgSpan.style.padding = '10px';
             errorMsgSpan.style.textAlign = 'center';
             errorMsgSpan.style.fontSize = '0.9em';
-            errorMsgSpan.style.color = '#dc3545'; // Error red
-            
+            errorMsgSpan.style.color = '#dc3545';
             errorDisplay.appendChild(errorMsgSpan);
             logoItem.appendChild(errorDisplay);
-            // No download button for errors
         } else {
-            // ---- SUCCESS HANDLING BLOCK ----
             const logoImgEl = document.createElement('img');
             logoImgEl.className = 'logo-image';
             logoImgEl.alt = `Logo for ${originalUrl}`;
@@ -326,8 +315,14 @@ https://anotherexample.org" required></textarea>
             downloadLinkEl.textContent = '⬇️ Download Logo';
 
             const timestamp = new Date().getTime();
+            // data.logo_url from backend is relative, e.g., "/static/filename.png"
             const logoPath = data.logo_url.startsWith('/') ? data.logo_url : '/' + data.logo_url;
-            const logoUrlForDisplay = `http://127.0.0.1:5001${logoPath}?t=${timestamp}`;
+            
+            // **** THIS IS THE FIX for addLogoToGrid ****
+            const logoUrlForDisplay = `${logoPath}?t=${timestamp}`; 
+            // The browser will resolve this relative to the current page's origin (your Render URL)
+
+            console.log(`Grid item: Attempting to load image from: ${logoUrlForDisplay}`); // Debugging
 
             const preloadImg = new Image();
             preloadImg.crossOrigin = "anonymous";
@@ -335,11 +330,9 @@ https://anotherexample.org" required></textarea>
                 logoImgEl.src = logoUrlForDisplay;
                 downloadLinkEl.href = logoUrlForDisplay;
                 downloadLinkEl.download = data.filename;
-                // downloadLinkEl.style.display = 'inline-block'; // Already handled by class
             };
             preloadImg.onerror = () => {
-                console.error(`Failed to load image for ${originalUrl}: ${logoUrlForDisplay}`);
-                // If image fails to load even after backend said success
+                console.error(`Failed to load image for ${originalUrl} at grid: ${logoUrlForDisplay}`);
                 logoItem.innerHTML = ''; // Clear previous attempts
                 const imgErrorDisplay = document.createElement('div');
                 imgErrorDisplay.className = 'logo-image placeholder';
@@ -351,18 +344,15 @@ https://anotherexample.org" required></textarea>
                 imgErrorSpan.style.color = '#dc3545';
                 imgErrorDisplay.appendChild(imgErrorSpan);
                 logoItem.appendChild(imgErrorDisplay);
-                // No download button
                 logoItem.appendChild(sourceUrlEl); // Re-add source URL
             };
             preloadImg.src = logoUrlForDisplay;
             logoItem.appendChild(logoImgEl);
             logoItem.appendChild(downloadLinkEl);
         }
-
-        logoItem.appendChild(sourceUrlEl); // Ensure source URL is always last
+        logoItem.appendChild(sourceUrlEl);
         scrapedLogosGridEl.appendChild(logoItem);
     }
-
 
     // --- Bulk Scraper Logic ---
     if (scraperForm) {
@@ -381,11 +371,7 @@ https://anotherexample.org" required></textarea>
             if (scrapeBtn) scrapeBtn.disabled = false;
             return;
         }
-
-        const urls = urlsText.split('\n')
-            .map(url => url.trim())
-            .filter(url => url.length > 0);
-
+        const urls = urlsText.split('\n').map(url => url.trim()).filter(url => url.length > 0);
         if (urls.length === 0) {
             scrapeMessageEl.textContent = '❌ No valid URLs entered.';
             scrapeMessageEl.className = 'message-area error';
@@ -395,13 +381,11 @@ https://anotherexample.org" required></textarea>
 
         scrapeMessageEl.innerHTML = `⏳ Processing ${urls.length} URL(s)... Please wait.`;
         scrapeMessageEl.className = "message-area loading";
-        scrapedLogosGridEl.innerHTML = ''; // Clear previous results
-
+        scrapedLogosGridEl.innerHTML = ''; 
         let successCount = 0;
         let errorCount = 0;
 
         for (const originalUrl of urls) {
-            // Create a placeholder in the grid immediately
             const placeholderItem = document.createElement('div');
             placeholderItem.className = 'logo-item';
             const placeholderImg = document.createElement('div');
@@ -421,44 +405,39 @@ https://anotherexample.org" required></textarea>
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: originalUrl }),
                 });
-                const data = await response.json(); // Attempt to parse JSON regardless of response.ok
+                const data = await response.json();
                 console.log(`Backend Response for ${originalUrl}:`, data);
 
-                // Now, remove placeholder as we have a response (or an error from json parsing)
                 if (scrapedLogosGridEl.contains(placeholderItem)) {
                     scrapedLogosGridEl.removeChild(placeholderItem);
                 }
 
                 if (!response.ok) {
-                    // Use error from data if available, otherwise make one up
                     addLogoToGrid(originalUrl, data, true, data.error || `Backend error: ${response.status}`);
                     errorCount++;
                 } else if (!data.logo_url || !data.filename) {
                     addLogoToGrid(originalUrl, data, true, data.message || "Backend response incomplete.");
                     errorCount++;
-                } else { // All good
+                } else {
                     addLogoToGrid(originalUrl, data);
                     successCount++;
                 }
-            } catch (err) { // Catches network errors from fetch() OR errors from response.json() OR other JS errors
+            } catch (err) {
                 console.error(`Critical error processing ${originalUrl}:`, err);
                 if (scrapedLogosGridEl.contains(placeholderItem)) {
                     scrapedLogosGridEl.removeChild(placeholderItem);
                 }
-                // Pass err.message directly, addLogoToGrid will use it
                 addLogoToGrid(originalUrl, { error: err.message }, true, err.message);
                 errorCount++;
             }
             scrapeMessageEl.innerHTML = `⏳ Processing... ${successCount + errorCount} of ${urls.length} done. Success: ${successCount}, Errors: ${errorCount}`;
         }
-
         scrapeMessageEl.innerHTML = `✅ Bulk processing complete! Processed ${urls.length} URLs. Success: ${successCount}, Errors: ${errorCount}.`;
         scrapeMessageEl.className = "message-area success";
         if (scrapeBtn) scrapeBtn.disabled = false;
     }
 
-
-    // --- Reformat Tool Logic (remains mostly the same) ---
+    // --- Reformat Tool Logic ---
     if (reformatDropArea) {
         reformatDropArea.addEventListener('click', () => reformatFileInput.click());
         reformatDropArea.addEventListener('dragover', (e) => { e.preventDefault(); reformatDropArea.classList.add('active'); });
@@ -510,10 +489,7 @@ https://anotherexample.org" required></textarea>
             formData.append('logo_image_to_reformat', fileToReformat);
 
             try {
-                const response = await fetch('/reformat-logo', {
-                    method: 'POST',
-                    body: formData,
-                });
+                const response = await fetch('/reformat-logo', { method: 'POST', body: formData });
                 const data = await response.json();
                 console.log("Reformat Backend Response:", data);
                 if (!response.ok) throw new Error(data.error || `Backend error: ${response.status}`);
@@ -530,10 +506,16 @@ https://anotherexample.org" required></textarea>
         });
     }
 
-    function displayReformattedLogo(data) { // This helper is specific to reformat tool's single display
+    function displayReformattedLogo(data) {
         const timestamp = new Date().getTime();
+        // data.logo_url from backend is relative, e.g., "/static/filename.png"
         const logoPath = data.logo_url.startsWith('/') ? data.logo_url : '/' + data.logo_url;
-        const logoUrlForDisplay = `http://127.0.0.1:5001${logoPath}?t=${timestamp}`;
+
+        // **** THIS IS THE FIX for displayReformattedLogo ****
+        const logoUrlForDisplay = `${logoPath}?t=${timestamp}`;
+        // The browser will resolve this relative to the current page's origin (your Render URL)
+
+        console.log(`Reformat tool: Attempting to load image from: ${logoUrlForDisplay}`); // Debugging
 
         const preloadImg = new Image();
         preloadImg.crossOrigin = "anonymous";
