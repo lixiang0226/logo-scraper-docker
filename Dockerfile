@@ -75,4 +75,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:8000/ || exit 1
 
 # FINAL CMD: Run Gunicorn directly
-CMD ["gunicorn", "--workers=2", "--threads=2", "--timeout=120", "--bind=0.0.0.0:8000", "app:app", "--log-level=info"]
+# CMD ["gunicorn", "--workers=2", "--threads=2", "--timeout=120", "--bind=0.0.0.0:8000", "app:app", "--log-level=info"]
+CMD ["sh", "-c", "which chromedriver"]

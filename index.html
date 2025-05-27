@@ -60,7 +60,7 @@
       white-space: pre;
       overflow-wrap: normal;
       overflow-x: auto;
-      flex-grow: 1; 
+      flex-grow: 1;
       max-width: 600px;
     }
 
@@ -116,9 +116,6 @@
     .download-button:focus {
         outline: none; /* Ensure no default outline if any sneaks back */
         box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.55); /* Greenish glow for focus, adjust alpha for intensity */
-        /* Or, for a border style focus: */
-        /* border: 2px solid #1c7430; */
-        /* padding: calc(8px - 2px) calc(15px - 2px); /* Adjust padding if adding border to maintain size */
     }
     /* Ensure all states of download-button link look consistent */
     a.download-button, a.download-button:visited, a.download-button:active {
@@ -172,14 +169,22 @@
         padding: 10px;
         overflow: hidden;
     }
-    /* .logo-item .download-button is now covered by the more general .download-button above */
     .logo-item .logo-source-url {
         font-size: 0.8em;
         color: #666;
-        margin-top: auto;
+        margin-top: auto; /* Pushes to the bottom */
         padding-top: 10px;
-        word-break: break-all;
+        word-break: break-all; /* Ensure long URLs without spaces can break */
     }
+    .logo-item .logo-source-url a { /* Style for the link within */
+        color: #007bff; /* Standard link blue */
+        text-decoration: underline;
+    }
+    .logo-item .logo-source-url a:hover {
+        color: #0056b3;
+        text-decoration: none;
+    }
+
 
     .message-area {
         margin-top: 20px;
@@ -210,7 +215,6 @@
         border: 1px solid #ccc;
         display: none;
     }
-    /* #reformattedLogoContainer .download-button is now covered by general .download-button */
     
     hr {
         border: 0;
@@ -218,21 +222,107 @@
         background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
         margin: 50px 5%;
     }
+
+    /* --- Documentation Section Styles --- */
+    .documentation-container {
+        margin-bottom: 20px; 
+        text-align: left; 
+        max-width: 700px; 
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .documentation-toggle-btn {
+        background-color: #6c757d; 
+        color: white;
+        padding: 8px 15px;
+        font-size: 14px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex; 
+        align-items: center;
+        gap: 8px; 
+        margin-bottom: 10px; 
+        transition: background-color 0.2s ease-out;
+    }
+    .documentation-toggle-btn:hover {
+        background-color: #5a6268;
+    }
+    .documentation-toggle-btn .toggle-icon {
+        font-weight: bold;
+    }
+    .documentation-content {
+        padding: 15px;
+        border: 1px solid #d1d9e6; 
+        border-radius: 8px;
+        background-color: #f8f9fa; 
+        font-size: 0.95em;
+        line-height: 1.6;
+    }
+    .documentation-content p {
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+    .documentation-content ul {
+        margin-top: 5px;
+        margin-bottom: 15px;
+        padding-left: 20px; 
+    }
+    .documentation-content li {
+        margin-bottom: 5px;
+    }
+    .documentation-content code {
+        background-color: #e9ecef;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
   <div class="tool-section" id="scraper-tool">
-    <h1>🖼️ Bulk Logo Scraper</h1> <!-- Title updated -->
+    <h1>🖼️ Bulk Logo Scraper</h1>
+
+    <div class="documentation-container">
+      <button id="toggleDocumentationBtn" class="documentation-toggle-btn">
+        <span>Show Documentation</span>
+        <span class="toggle-icon">[+]</span>
+      </button>
+      <div id="documentationContent" class="documentation-content" style="display: none;">
+        <p><strong>How to use the Bulk Logo Scraper:</strong></p>
+        <ul>
+          <li>Enter one website URL per line in the text area (e.g., <code>https://example.com</code>).</li>
+          <li>You can paste multiple URLs, each on a new line.</li>
+          <li>Click the "Scrape All Logos" button.</li>
+          <li>The tool will process each URL and attempt to find its logo.</li>
+          <li>Results (logos or error messages) will appear in the grid below.</li>
+          <li>Successfully found logos can be downloaded using the "⬇️ Download Logo" button.</li>
+        </ul>
+        <p><strong>Tips for Best Results:</strong></p>
+        <ul>
+          <li>Provide full URLs, including <code>http://</code> or <code>https://</code>. If omitted, <code>https://</code> will be assumed.</li>
+          <li>Ensure the websites are publicly accessible.</li>
+          <li>Scraping can take a few seconds per URL, especially for complex sites. Please be patient.</li>
+          <li>If a logo is not found, it might be due to the website's structure or anti-scraping measures. You can try the "Logo Reformat Tool" if you have the logo image from another source.</li>
+        </ul>
+        <p><strong>Understanding "No Logo Found":</strong></p>
+        <ul>
+            <li>The scraper uses common patterns to find logos (keywords in image names, alt text, CSS classes like "logo" or "brand", etc.).</li>
+            <li>Some websites embed logos in ways that are very difficult for automated tools to detect without site-specific rules.</li>
+            <li>If an image URL is found but results in an error (e.g., 404 Not Found, or the server returns HTML instead of an image), it will also be reported as an issue.</li>
+        </ul>
+      </div>
+    </div>
+
     <form id="scraperForm">
-      <!-- Replaced input[type="text"] with textarea -->
       <textarea id="urlsInput" placeholder="Enter website URLs, one per line...
 e.g.
 https://example.com
 https://anotherexample.org" required></textarea>
-      <button id="scrapeBtn" type="submit">Scrape All Logos</button> <!-- Button text updated -->
+      <button id="scrapeBtn" type="submit">Scrape All Logos</button>
     </form>
     <div id="scrapeMessage" class="message-area"></div>
-    <!-- New container for the grid of scraped logos -->
     <div id="scrapedLogosGrid">
       <!-- Logo items will be dynamically inserted here by JavaScript -->
     </div>
@@ -250,7 +340,6 @@ https://anotherexample.org" required></textarea>
     <img id="reformatPreviewImage" alt="Preview of logo to reformat" />
     <div id="reformatMessage" class="message-area"></div>
     <div id="reformattedLogoContainer" class="logo-display-container">
-      <!-- Note: Reformat tool still displays one logo at a time -->
       <img id="reformattedLogoImage" class="logo-image" crossorigin="anonymous" alt="Reformatted Logo" />
       <a id="reformattedLogoDownload" class="download-button" href="#" download>⬇️ Download Reformatted Logo</a>
     </div>
@@ -267,6 +356,25 @@ https://anotherexample.org" required></textarea>
     const scrapedLogosGridEl = document.getElementById('scrapedLogosGrid');
     const scrapeBtn = document.getElementById('scrapeBtn');
 
+    // --- Documentation Toggle Elements & Logic ---
+    const toggleDocumentationBtn = document.getElementById('toggleDocumentationBtn');
+    const documentationContentEl = document.getElementById('documentationContent');
+
+    if (toggleDocumentationBtn && documentationContentEl) {
+        toggleDocumentationBtn.addEventListener('click', function() {
+            const isHidden = documentationContentEl.style.display === 'none';
+            if (isHidden) {
+                documentationContentEl.style.display = 'block';
+                this.querySelector('span:first-child').textContent = 'Hide Documentation';
+                this.querySelector('.toggle-icon').textContent = '[-]';
+            } else {
+                documentationContentEl.style.display = 'none';
+                this.querySelector('span:first-child').textContent = 'Show Documentation';
+                this.querySelector('.toggle-icon').textContent = '[+]';
+            }
+        });
+    }
+
     // --- Reformat Tool Elements ---
     const reformatDropArea = document.getElementById('reformatDropArea');
     const reformatFileInput = document.getElementById('reformatFileInput');
@@ -282,13 +390,27 @@ https://anotherexample.org" required></textarea>
         const logoItem = document.createElement('div');
         logoItem.className = 'logo-item';
 
-        const sourceUrlEl = document.createElement('div');
-        sourceUrlEl.className = 'logo-source-url';
+        // --- MODIFIED SOURCE URL DISPLAY TO BE A CLICKABLE LINK ---
+        const sourceDisplayContainer = document.createElement('div');
+        sourceDisplayContainer.className = 'logo-source-url'; 
+
+        const sourcePrefixText = document.createTextNode('Source: '); 
+
+        const sourceLink = document.createElement('a');
+        sourceLink.href = originalUrl; 
+        sourceLink.target = '_blank';  
+        sourceLink.rel = 'noopener noreferrer'; 
+
         const shortUrl = originalUrl.length > 40 ? originalUrl.substring(0, 37) + '...' : originalUrl;
-        sourceUrlEl.textContent = `Source: ${shortUrl}`;
+        sourceLink.textContent = shortUrl; 
         if (originalUrl.length > 40) {
-            sourceUrlEl.title = originalUrl;
+            sourceLink.title = originalUrl; 
         }
+        
+        sourceDisplayContainer.appendChild(sourcePrefixText);
+        sourceDisplayContainer.appendChild(sourceLink);
+        // --- END MODIFIED SOURCE URL DISPLAY ---
+
 
         if (errorOccurred || !data || !data.logo_url || !data.filename) {
             const errorDisplay = document.createElement('div');
@@ -315,14 +437,10 @@ https://anotherexample.org" required></textarea>
             downloadLinkEl.textContent = '⬇️ Download Logo';
 
             const timestamp = new Date().getTime();
-            // data.logo_url from backend is relative, e.g., "/static/filename.png"
             const logoPath = data.logo_url.startsWith('/') ? data.logo_url : '/' + data.logo_url;
-            
-            // **** THIS IS THE FIX for addLogoToGrid ****
             const logoUrlForDisplay = `${logoPath}?t=${timestamp}`; 
-            // The browser will resolve this relative to the current page's origin (your Render URL)
 
-            console.log(`Grid item: Attempting to load image from: ${logoUrlForDisplay}`); // Debugging
+            console.log(`Grid item: Attempting to load image from: ${logoUrlForDisplay}`);
 
             const preloadImg = new Image();
             preloadImg.crossOrigin = "anonymous";
@@ -333,7 +451,7 @@ https://anotherexample.org" required></textarea>
             };
             preloadImg.onerror = () => {
                 console.error(`Failed to load image for ${originalUrl} at grid: ${logoUrlForDisplay}`);
-                logoItem.innerHTML = ''; // Clear previous attempts
+                logoItem.innerHTML = ''; 
                 const imgErrorDisplay = document.createElement('div');
                 imgErrorDisplay.className = 'logo-image placeholder';
                 const imgErrorSpan = document.createElement('span');
@@ -344,13 +462,13 @@ https://anotherexample.org" required></textarea>
                 imgErrorSpan.style.color = '#dc3545';
                 imgErrorDisplay.appendChild(imgErrorSpan);
                 logoItem.appendChild(imgErrorDisplay);
-                logoItem.appendChild(sourceUrlEl); // Re-add source URL
+                logoItem.appendChild(sourceDisplayContainer); // Re-add the source link container
             };
             preloadImg.src = logoUrlForDisplay;
             logoItem.appendChild(logoImgEl);
             logoItem.appendChild(downloadLinkEl);
         }
-        logoItem.appendChild(sourceUrlEl);
+        logoItem.appendChild(sourceDisplayContainer); // Append the source link container to the logo item
         scrapedLogosGridEl.appendChild(logoItem);
     }
 
@@ -392,10 +510,22 @@ https://anotherexample.org" required></textarea>
             placeholderImg.className = 'logo-image placeholder';
             placeholderImg.textContent = `Loading: ${originalUrl.substring(0,25)}...`;
             placeholderItem.appendChild(placeholderImg);
-            const sourceUrlTemp = document.createElement('div');
-            sourceUrlTemp.className = 'logo-source-url';
-            sourceUrlTemp.textContent = `Source: ${originalUrl.length > 30 ? originalUrl.substring(0, 27) + '...' : originalUrl}`;
-            placeholderItem.appendChild(sourceUrlTemp);
+            
+            // Create placeholder source link
+            const sourceLinkContainerTemp = document.createElement('div');
+            sourceLinkContainerTemp.className = 'logo-source-url';
+            const sourcePrefixTextTemp = document.createTextNode('Source: ');
+            const sourceLinkTemp = document.createElement('a');
+            sourceLinkTemp.href = originalUrl;
+            sourceLinkTemp.target = '_blank';
+            sourceLinkTemp.rel = 'noopener noreferrer';
+            const shortUrlTemp = originalUrl.length > 30 ? originalUrl.substring(0, 27) + '...' : originalUrl;
+            sourceLinkTemp.textContent = shortUrlTemp;
+            if(originalUrl.length > 30) sourceLinkTemp.title = originalUrl;
+            sourceLinkContainerTemp.appendChild(sourcePrefixTextTemp);
+            sourceLinkContainerTemp.appendChild(sourceLinkTemp);
+            placeholderItem.appendChild(sourceLinkContainerTemp);
+
             scrapedLogosGridEl.appendChild(placeholderItem);
 
             try {
@@ -501,21 +631,17 @@ https://anotherexample.org" required></textarea>
                 reformatMessageEl.className = 'message-area error';
             } finally {
                 processReformatBtn.disabled = false;
-                fileToReformat = null;
+                fileToReformat = null; 
             }
         });
     }
 
     function displayReformattedLogo(data) {
         const timestamp = new Date().getTime();
-        // data.logo_url from backend is relative, e.g., "/static/filename.png"
         const logoPath = data.logo_url.startsWith('/') ? data.logo_url : '/' + data.logo_url;
-
-        // **** THIS IS THE FIX for displayReformattedLogo ****
         const logoUrlForDisplay = `${logoPath}?t=${timestamp}`;
-        // The browser will resolve this relative to the current page's origin (your Render URL)
 
-        console.log(`Reformat tool: Attempting to load image from: ${logoUrlForDisplay}`); // Debugging
+        console.log(`Reformat tool: Attempting to load image from: ${logoUrlForDisplay}`);
 
         const preloadImg = new Image();
         preloadImg.crossOrigin = "anonymous";
@@ -539,7 +665,5 @@ https://anotherexample.org" required></textarea>
         preloadImg.src = logoUrlForDisplay;
     }
 </script>
-</body>
-</html>
 </body>
 </html>

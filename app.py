@@ -27,6 +27,13 @@ def scrape_logo():
         if not url:
             print("❌ Error: No URL provided.")
             return jsonify({"error": "No URL provided"}), 400
+        
+        # Basic check for invalid characters in hostname part
+        # This is a simple check; more sophisticated validation could be added
+        temp_domain_check = url.split('/')[2] if '//' in url else url.split('/')[0]
+        if any(char in temp_domain_check for char in [' ', '\t', '\n', '\r']):
+            print(f"❌ Error: URL '{url}' contains invalid characters in hostname.")
+            return jsonify({"error": f"Invalid URL format: '{url}' contains spaces or control characters in hostname."}), 400
 
         # Normalize URL to include scheme if missing
         if not url.startswith("http://") and not url.startswith("https://"):
@@ -162,4 +169,4 @@ def reformat_uploaded_logo():
 
 if __name__ == "__main__":
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    app.run(debug=False, host='0.0.0.0', port=5001) 
+    app.run(debug=False, host='0.0.0.0', port=5007) 
