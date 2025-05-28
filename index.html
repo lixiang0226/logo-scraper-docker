@@ -11,6 +11,7 @@
       margin-top: 30px;
       padding-bottom: 50px;
       background-color: #f0f2f5; /* Light background for the page */
+      overflow-x: hidden; /* Prevent horizontal scroll from nyan cats */
     }
     .tool-section {
         margin-bottom: 40px;
@@ -163,8 +164,8 @@
         font-style: italic;
         color: #888;
         background-color: #f8f8f8;
-        width: 280px;
-        height: 140px;
+        width: 280px; /* Fixed width for placeholder text consistency */
+        height: 140px; /* Fixed height for placeholder text consistency */
         box-sizing: border-box;
         padding: 10px;
         overflow: hidden;
@@ -278,6 +279,27 @@
         font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.9em;
     }
+
+    /* --- Nyan Cat Easter Egg Styles --- */
+    .nyan-cat-element {
+        position: fixed;
+        z-index: 10000;
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        opacity: 0.9;
+        box-shadow: 0 0 15px 4px rgba(180, 50, 255, 0.75), 0 0 5px 2px rgba(200, 100, 255, 0.6);
+        animation: nyan-spin-and-pulse 1.5s linear infinite;
+        will-change: transform, top, left;
+        object-fit: cover; 
+        background-color: rgba(255, 255, 255, 0.1); /* Visible if image fails to load */
+    }
+
+    @keyframes nyan-spin-and-pulse {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.15); }
+        100% { transform: rotate(360deg) scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -312,6 +334,7 @@
             <li>Some websites embed logos in ways that are very difficult for automated tools to detect without site-specific rules.</li>
             <li>If an image URL is found but results in an error (e.g., 404 Not Found, or the server returns HTML instead of an image), it will also be reported as an issue.</li>
         </ul>
+        <p><strong>PSST...</strong> Try typing <code>nyan_cat.com</code> in the URL input for a surprise! 🤫</p>
       </div>
     </div>
 
@@ -385,12 +408,23 @@ https://anotherexample.org" required></textarea>
     const processReformatBtn = document.getElementById('processReformatBtn');
     let fileToReformat = null;
 
+    // --- Nyan Cat Easter Egg Variables ---
+    let nyanCatIntervalId = null;
+    let nyanCatAnimationId = null;
+    let activeNyanCats = [];
+    let nyanCatDeactivateTimeoutId = null;
+    const NYAN_CAT_DURATION = 15000; 
+    const NYAN_CAT_SPAWN_RATE = 350; 
+    const CAT_IMG_WIDTH = 60; // Used for cataas.com query and element size
+    const CAT_IMG_HEIGHT = 60; // Used for cataas.com query and element size
+    
+    // REMOVED: PRELOADED_CAT_GIFS array. We'll use cataas.com for static images.
+
     // --- Helper: Create and add a single logo item to the grid ---
     function addLogoToGrid(originalUrl, data, errorOccurred = false, customErrorMessage = "Failed to process logo.") {
         const logoItem = document.createElement('div');
         logoItem.className = 'logo-item';
 
-        // --- MODIFIED SOURCE URL DISPLAY TO BE A CLICKABLE LINK ---
         const sourceDisplayContainer = document.createElement('div');
         sourceDisplayContainer.className = 'logo-source-url'; 
 
@@ -409,7 +443,6 @@ https://anotherexample.org" required></textarea>
         
         sourceDisplayContainer.appendChild(sourcePrefixText);
         sourceDisplayContainer.appendChild(sourceLink);
-        // --- END MODIFIED SOURCE URL DISPLAY ---
 
 
         if (errorOccurred || !data || !data.logo_url || !data.filename) {
@@ -462,13 +495,13 @@ https://anotherexample.org" required></textarea>
                 imgErrorSpan.style.color = '#dc3545';
                 imgErrorDisplay.appendChild(imgErrorSpan);
                 logoItem.appendChild(imgErrorDisplay);
-                logoItem.appendChild(sourceDisplayContainer); // Re-add the source link container
+                logoItem.appendChild(sourceDisplayContainer);
             };
             preloadImg.src = logoUrlForDisplay;
             logoItem.appendChild(logoImgEl);
             logoItem.appendChild(downloadLinkEl);
         }
-        logoItem.appendChild(sourceDisplayContainer); // Append the source link container to the logo item
+        logoItem.appendChild(sourceDisplayContainer);
         scrapedLogosGridEl.appendChild(logoItem);
     }
 
@@ -476,6 +509,12 @@ https://anotherexample.org" required></textarea>
     if (scraperForm) {
         scraperForm.addEventListener('submit', function (e) {
             e.preventDefault();
+            const urlsTextForCheck = urlsInputEl.value.trim();
+            if (urlsTextForCheck.toLowerCase().includes('nyan_cat.com')) {
+                activateNyanCatMode();
+                return; 
+            }
+
             if (scrapeBtn) scrapeBtn.disabled = true;
             processBulkScrape();
         });
@@ -511,7 +550,6 @@ https://anotherexample.org" required></textarea>
             placeholderImg.textContent = `Loading: ${originalUrl.substring(0,25)}...`;
             placeholderItem.appendChild(placeholderImg);
             
-            // Create placeholder source link
             const sourceLinkContainerTemp = document.createElement('div');
             sourceLinkContainerTemp.className = 'logo-source-url';
             const sourcePrefixTextTemp = document.createTextNode('Source: ');
@@ -664,6 +702,98 @@ https://anotherexample.org" required></textarea>
         };
         preloadImg.src = logoUrlForDisplay;
     }
-</script>
+
+    // --- Nyan Cat Easter Egg Functions ---
+    function createNyanCatInstance() {
+        const cat = document.createElement('img');
+        cat.className = 'nyan-cat-element';
+        
+        // MODIFIED: Use cataas.com to fetch random static cat images
+        // Adding width, height, type=square, and a unique buster to try and get varied, appropriately sized images
+        cat.src = `https://cataas.com/cat?width=${CAT_IMG_WIDTH}&height=${CAT_IMG_HEIGHT}&type=square&unique=${Date.now()}${Math.random()}`;
+        cat.alt = "Cat"; // Simplified alt text
+        
+        cat.style.left = Math.random() * (window.innerWidth - CAT_IMG_WIDTH) + 'px';
+        cat.style.top = Math.random() * (window.innerHeight - CAT_IMG_HEIGHT) + 'px';
+        
+        cat.dataset.dx = (Math.random() - 0.5) * 6; 
+        cat.dataset.dy = (Math.random() - 0.5) * 6; 
+        if (Math.abs(parseFloat(cat.dataset.dx)) < 1) cat.dataset.dx = parseFloat(cat.dataset.dx) > 0 ? 1 : -1;
+        if (Math.abs(parseFloat(cat.dataset.dy)) < 1) cat.dataset.dy = parseFloat(cat.dataset.dy) > 0 ? 1 : -1;
+
+        document.body.appendChild(cat);
+        activeNyanCats.push(cat);
+    }
+
+    function animateNyanCatsLoop() {
+        activeNyanCats.forEach(cat => {
+            let x = parseFloat(cat.style.left);
+            let y = parseFloat(cat.style.top);
+            let dx = parseFloat(cat.dataset.dx);
+            let dy = parseFloat(cat.dataset.dy);
+
+            x += dx;
+            y += dy;
+
+            if (x < 0 || x > window.innerWidth - CAT_IMG_WIDTH) {
+                dx = -dx;
+                x = x < 0 ? 0 : window.innerWidth - CAT_IMG_WIDTH; 
+            }
+            if (y < 0 || y > window.innerHeight - CAT_IMG_HEIGHT) {
+                dy = -dy;
+                y = y < 0 ? 0 : window.innerHeight - CAT_IMG_HEIGHT; 
+            }
+            
+            cat.dataset.dx = dx;
+            cat.dataset.dy = dy;
+            cat.style.left = x + 'px';
+            cat.style.top = y + 'px';
+        });
+        nyanCatAnimationId = requestAnimationFrame(animateNyanCatsLoop);
+    }
+
+    function activateNyanCatMode() {
+        console.log("NYAN CAT MODE ACTIVATED! 🙀");
+        deactivateNyanCatMode(true); 
+
+        if(scrapeBtn) scrapeBtn.disabled = true;
+        scrapeMessageEl.innerHTML = `🎉 <span style="color: #ff00ff; font-weight: bold;">NYAN CAT MODE ACTIVATED!</span> 냥냥냥! 🌈`;
+        scrapeMessageEl.className = 'message-area loading'; 
+        scrapedLogosGridEl.innerHTML = ''; 
+
+        for (let i = 0; i < 5; i++) { 
+            createNyanCatInstance();
+        }
+
+        nyanCatIntervalId = setInterval(createNyanCatInstance, NYAN_CAT_SPAWN_RATE);
+        nyanCatAnimationId = requestAnimationFrame(animateNyanCatsLoop);
+        
+        nyanCatDeactivateTimeoutId = setTimeout(() => deactivateNyanCatMode(false), NYAN_CAT_DURATION);
+    }
+
+    function deactivateNyanCatMode(isInternalReset = false) {
+        if (nyanCatIntervalId) clearInterval(nyanCatIntervalId);
+        if (nyanCatAnimationId) cancelAnimationFrame(nyanCatAnimationId);
+        if (nyanCatDeactivateTimeoutId) clearTimeout(nyanCatDeactivateTimeoutId);
+
+        nyanCatIntervalId = null;
+        nyanCatAnimationId = null;
+        nyanCatDeactivateTimeoutId = null;
+
+        activeNyanCats.forEach(cat => cat.remove());
+        activeNyanCats = [];
+
+        if (!isInternalReset) { 
+            scrapeMessageEl.textContent = 'Nyan mode deactivated. Ready for serious business! 😼';
+            scrapeMessageEl.className = 'message-area success';
+            if (scrapeBtn) scrapeBtn.disabled = false;
+
+            urlsInputEl.value = urlsInputEl.value.replace(/nyan_cat\.com/gi, '').trim();
+            if (urlsInputEl.value === '') {
+                 urlsInputEl.placeholder = "Enter website URLs, one per line...\ne.g.\nhttps://example.com\nhttps://anotherexample.org";
+            }
+        }
+    }
+  </script>
 </body>
 </html>
